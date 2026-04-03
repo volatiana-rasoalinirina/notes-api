@@ -1,83 +1,114 @@
 # Notes API
 
-A simple Django REST Framework API for managing notes. Built as a deployment learning project.
+A production-ready REST API built with Django REST Framework, deployed on AWS with full CI/CD pipeline.
 
-## Stack
+## Live API
 
-- Python 3.11 / Django 4.2 / Django REST Framework
-- PostgreSQL
-- drf-spectacular (Swagger UI)
-- django-environ
-- coverage
+- **Base URL:** `http://16.170.248.131:8000/api/` 
+- **Interactive docs:** `http://16.170.248.131:8000/api/docs/`
+
+> Note: IP may change if the EC2 instance is restarted.
+
+## Architecture
+
+```
+Developer
+    │
+    │  git push
+    ▼
+GitHub Actions (CI/CD)
+    │
+    │  SSH deploy
+    ▼
+AWS EC2 (Docker + Django)
+    │
+    │  PostgreSQL connection
+    ▼
+AWS RDS (PostgreSQL)
+```
+
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Backend | Python 3.11, Django REST Framework |
+| Database | PostgreSQL (AWS RDS) |
+| Containerization | Docker, Docker Compose |
+| Server | AWS EC2 (Ubuntu 24.04) |
+| CI/CD | GitHub Actions |
+| API Docs | drf-spectacular (Swagger UI) |
+
+## Endpoints
+
+| Method | URL | Description |
+|---|---|---|
+| GET | `/api/notes/` | List all notes |
+| POST | `/api/notes/` | Create a note |
+| GET | `/api/notes/{id}/` | Get a note |
+| PATCH | `/api/notes/{id}/` | Update a note |
+| DELETE | `/api/notes/{id}/` | Delete a note |
 
 ## Local Setup
 
-### 1. Prerequisites
+**Prerequisites:** Python 3.11, Docker, PostgreSQL
 
-- Python 3.11
-- PostgreSQL running locally
-
-### 2. Create the database
-
+**1. Clone the repo:**
 ```bash
-createdb notes_db
-```
-
-### 3. Clone and set up the environment
-
-```bash
-git clone <repo-url>
+git clone https://github.com/volatiana-rasoalinirina/notes-api.git
 cd notes-api
-
-python3.11 -m venv venv
-source venv/bin/activate
-
-pip install -r requirements.txt
 ```
 
-### 4. Configure environment variables
-
+**2. Create environment file:**
 ```bash
 cp .env.example .env
-# Edit .env and set your SECRET_KEY and DATABASE_URL
 ```
 
-### 5. Run migrations and start the server
+Edit `.env` with your local values:
+```
+DEBUG=True
+SECRET_KEY=your-secret-key
+DATABASE_URL=postgres://postgres:password@localhost:5432/notesapi
+ALLOWED_HOSTS=localhost,127.0.0.1
+```
 
+**3. Run with Docker:**
 ```bash
+docker compose up
+```
+
+API is available at `http://localhost:8000/api/docs/`
+
+**4. Run without Docker:**
+```bash
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
 python manage.py migrate
 python manage.py runserver
 ```
 
-The API will be available at `http://localhost:8000`.
+## Deployment
 
-## API Endpoints
+Every push to `main` triggers automatic deployment via GitHub Actions:
 
-| Method | URL | Description |
-|--------|-----|-------------|
-| GET | `/api/notes/` | List all notes |
-| POST | `/api/notes/` | Create a note |
-| GET | `/api/notes/{id}/` | Retrieve a note |
-| PATCH | `/api/notes/{id}/` | Update a note |
-| DELETE | `/api/notes/{id}/` | Delete a note |
+1. GitHub Actions SSHs into EC2
+2. Pulls latest code from GitHub
+3. Restarts Docker containers
 
-## Swagger UI
+No manual server access needed.
 
-Interactive API docs available at:
+## Environment Variables
 
-```
-http://localhost:8000/api/docs/
-```
+| Variable | Description |
+|---|---|
+| `DEBUG` | Django debug mode (False in production) |
+| `SECRET_KEY` | Django secret key |
+| `DATABASE_URL` | PostgreSQL connection string |
+| `ALLOWED_HOSTS` | Comma-separated list of allowed hosts |
 
-## Running Tests
+## Author
 
-```bash
-coverage run manage.py test && coverage report
-```
+**Volatiana Rasoalinirina** — Backend Engineer · Python & Django REST Framework
 
-To view an HTML coverage report:
-
-```bash
-coverage html
-open htmlcov/index.html
-```
+- LinkedIn: [linkedin.com/in/volatianarasoalinirina-3721ab1a5](https://www.linkedin.com/in/volatianarasoalinirina-3721ab1a5)
+- Email: volatiana.rasoalinirina.dev@gmail.com
