@@ -67,6 +67,46 @@ class NoteListCreateTests(APITestCase):
         response = self.client.post(self.url, self.valid_payload, format="json")
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
+    def test_search_by_title(self):
+        Note.objects.create(title="Django tips", content="Some content", creator=self.user)
+        Note.objects.create(title="Python basics", content="Some content", creator=self.user)
+        response = self.client.get(self.url, {"search": "Django"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data["results"]), 1)
+        self.assertEqual(response.data["results"][0]["title"], "Django tips")
+
+    def test_search_by_content(self):
+        Note.objects.create(title="Note 1", content="About Django REST", creator=self.user)
+        Note.objects.create(title="Note 2", content="About Python", creator=self.user)
+        response = self.client.get(self.url, {"search": "REST"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data["results"]), 1)
+        self.assertEqual(response.data["results"][0]["title"], "Note 1")
+
+    def test_search_no_match(self):
+        Note.objects.create(title="Django tips", content="Some content", creator=self.user)
+        response = self.client.get(self.url, {"search": "nonexistent"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data["results"]), 0)
+
+    def test_ordering_by_created_at_ascending(self):
+        note1 = Note.objects.create(title="First", content="Content", creator=self.user)
+        note2 = Note.objects.create(title="Second", content="Content", creator=self.user)
+        response = self.client.get(self.url, {"ordering": "created_at"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        results = response.data["results"]
+        self.assertEqual(results[0]["id"], note1.pk)
+        self.assertEqual(results[1]["id"], note2.pk)
+
+    def test_ordering_by_created_at_descending(self):
+        note1 = Note.objects.create(title="First", content="Content", creator=self.user)
+        note2 = Note.objects.create(title="Second", content="Content", creator=self.user)
+        response = self.client.get(self.url, {"ordering": "-created_at"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        results = response.data["results"]
+        self.assertEqual(results[0]["id"], note2.pk)
+        self.assertEqual(results[1]["id"], note1.pk)
+
 
 class NoteRetrieveUpdateDeleteTests(APITestCase):
     def setUp(self):
