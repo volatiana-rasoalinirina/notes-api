@@ -15,14 +15,14 @@ class NoteListCreateTests(APITestCase):
     def test_list_notes_empty(self):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data, [])
+        self.assertEqual(response.data["results"], [])
 
     def test_list_notes_returns_all(self):
         Note.objects.create(title="Note 1", content="Content 1", creator=self.user)
         Note.objects.create(title="Note 2", content="Content 2", creator=self.user)
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 2)
+        self.assertEqual(len(response.data["results"]), 2)
 
     def test_create_note_success(self):
         response = self.client.post(self.url, self.valid_payload, format="json")
