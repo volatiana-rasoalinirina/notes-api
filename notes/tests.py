@@ -7,7 +7,7 @@ from .models import Note
 
 class NoteListCreateTests(APITestCase):
     def setUp(self):
-        self.url = reverse("note-list")
+        self.url = reverse("note-list", kwargs={"version": "v1"})
         self.valid_payload = {"title": "Test Note", "content": "Test content"}
         self.user = User.objects.create_user(username="testuser", password="<PASSWORD>")
         self.client.force_authenticate(user=self.user)
@@ -113,7 +113,7 @@ class NoteRetrieveUpdateDeleteTests(APITestCase):
         self.user = User.objects.create_user(username="testuser", password="<PASSWORD>")
         self.client.force_authenticate(user=self.user)
         self.note = Note.objects.create(title="Existing Note", content="Existing content", creator=self.user)
-        self.url = reverse("note-detail", kwargs={"pk": self.note.pk})
+        self.url = reverse("note-detail", kwargs={"version": "v1", "pk": self.note.pk})
 
     def test_retrieve_note_success(self):
         response = self.client.get(self.url)
@@ -123,7 +123,7 @@ class NoteRetrieveUpdateDeleteTests(APITestCase):
         self.assertEqual(response.data["content"], "Existing content")
 
     def test_retrieve_note_not_found(self):
-        url = reverse("note-detail", kwargs={"pk": 9999})
+        url = reverse("note-detail", kwargs={"version": "v1", "pk": 9999})
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
@@ -139,7 +139,7 @@ class NoteRetrieveUpdateDeleteTests(APITestCase):
         self.assertEqual(response.data["content"], "New content")
 
     def test_partial_update_not_found(self):
-        url = reverse("note-detail", kwargs={"pk": 9999})
+        url = reverse("note-detail", kwargs={"version": "v1", "pk": 9999})
         response = self.client.patch(url, {"title": "X"}, format="json")
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
@@ -153,7 +153,7 @@ class NoteRetrieveUpdateDeleteTests(APITestCase):
         self.assertFalse(Note.objects.filter(pk=self.note.pk).exists())
 
     def test_delete_note_not_found(self):
-        url = reverse("note-detail", kwargs={"pk": 9999})
+        url = reverse("note-detail", kwargs={"version": "v1", "pk": 9999})
         response = self.client.delete(url)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
