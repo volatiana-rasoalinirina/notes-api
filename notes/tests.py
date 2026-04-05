@@ -172,3 +172,22 @@ class NoteRetrieveUpdateDeleteTests(APITestCase):
         self.client.force_authenticate(user=other_user)
         response = self.client.delete(self.url)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_v1_response_has_creator_field(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn("creator", response.data)
+        self.assertNotIn("owner", response.data)
+
+    def test_v2_response_has_owner_field(self):
+        url = reverse("note-detail", kwargs={"version": "v2", "pk": self.note.pk})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn("owner", response.data)
+        self.assertNotIn("creator", response.data)
+
+    def test_v2_owner_matches_creator(self):
+        url = reverse("note-detail", kwargs={"version": "v2", "pk": self.note.pk})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["owner"], self.user.pk)

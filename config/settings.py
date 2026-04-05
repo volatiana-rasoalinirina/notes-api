@@ -86,7 +86,7 @@ REST_FRAMEWORK = {
     "PAGE_SIZE": 10,
     "DEFAULT_VERSIONING_CLASS": "rest_framework.versioning.URLPathVersioning",
     "DEFAULT_VERSION": "v1",
-    "ALLOWED_VERSIONS": ["v1"]
+    "ALLOWED_VERSIONS": ["v1", "v2"]
 }
 
 SPECTACULAR_SETTINGS = {
