@@ -17,3 +17,5 @@ typing_extensions==4.15.0
 uritemplate==4.2.0
 djangorestframework_simplejwt==5.5.1
 PyJWT==2.12.1
+django-redis==6.0.0
+redis==7.4.0

@@ -19,8 +19,14 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      redis:
+        condition: service_started
     env_file:
       - .env
     volumes:
       - .:/app
     command: sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"

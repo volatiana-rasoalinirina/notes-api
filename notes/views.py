@@ -1,5 +1,7 @@
+from django.core.cache import cache
 from rest_framework import viewsets, filters
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 
 from .models import Note
 from .permissions import IsOwnerOrReadOnly
@@ -20,5 +22,23 @@ class NoteViewSet(viewsets.ModelViewSet):
             return NoteSerializerV2
         return NoteSerializer
 
+    def list(self, request, *args, **kwargs):
+        cached = cache.get(f"notes_list_{request.user.id}")
+        if cached:
+            return Response(cached)
+
+        response = super().list(request, *args, **kwargs)
+        cache.set(f"notes_list_{request.user.id}", response.data, timeout=300)
+        return response
+
     def perform_create(self, serializer):
         serializer.save(creator=self.request.user)
+        cache.delete(f"notes_list_{self.request.user.id}")
+
+    def perform_update(self, serializer):
+        serializer.save()
+        cache.delete(f"notes_list_{self.request.user.id}")
+
+    def perform_destroy(self, instance):
+        instance.delete()
+        cache.delete(f"notes_list_{self.request.user.id}")

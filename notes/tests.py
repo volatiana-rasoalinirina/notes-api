@@ -1,8 +1,16 @@
 from django.contrib.auth.models import User
+from django.core.cache import cache
+from django.test import override_settings
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 from .models import Note
+
+LOCMEM_CACHE = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+    }
+}
 
 
 class NoteListCreateTests(APITestCase):
@@ -191,3 +199,41 @@ class NoteRetrieveUpdateDeleteTests(APITestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["owner"], self.user.pk)
+
+
+@override_settings(CACHES=LOCMEM_CACHE)
+class NotesCacheTests(APITestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username="cacheuser", password="testpass")
+        self.client.force_authenticate(user=self.user)
+        self.list_url = reverse("note-list", kwargs={"version": "v1"})
+        self.cache_key = f"notes_list_{self.user.id}"
+        cache.clear()
+
+    def test_list_populates_cache(self):
+        Note.objects.create(title="Note", content="Content", creator=self.user)
+        self.assertIsNone(cache.get(self.cache_key))
+        self.client.get(self.list_url)
+        self.assertIsNotNone(cache.get(self.cache_key))
+
+    def test_create_invalidates_cache(self):
+        self.client.get(self.list_url)
+        self.assertIsNotNone(cache.get(self.cache_key))
+        self.client.post(self.list_url, {"title": "New", "content": "Content"}, format="json")
+        self.assertIsNone(cache.get(self.cache_key))
+
+    def test_update_invalidates_cache(self):
+        note = Note.objects.create(title="Note", content="Content", creator=self.user)
+        self.client.get(self.list_url)
+        self.assertIsNotNone(cache.get(self.cache_key))
+        url = reverse("note-detail", kwargs={"version": "v1", "pk": note.pk})
+        self.client.patch(url, {"title": "Updated"}, format="json")
+        self.assertIsNone(cache.get(self.cache_key))
+
+    def test_delete_invalidates_cache(self):
+        note = Note.objects.create(title="Note", content="Content", creator=self.user)
+        self.client.get(self.list_url)
+        self.assertIsNotNone(cache.get(self.cache_key))
+        url = reverse("note-detail", kwargs={"version": "v1", "pk": note.pk})
+        self.client.delete(url)
+        self.assertIsNone(cache.get(self.cache_key))

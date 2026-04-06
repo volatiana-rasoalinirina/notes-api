@@ -94,3 +94,13 @@ SPECTACULAR_SETTINGS = {
     "DESCRIPTION": "A simple notes API built with Django REST Framework.",
     "VERSION": "1.0.0",
 }
+
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://redis:6379/0",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    }
+}
